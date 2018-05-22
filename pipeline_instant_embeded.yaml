@@ -35,7 +35,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app") {
+                                openshift.withProject("cicd") {
                                     echo "Using project: ${openshift.project()}"
                                 }
                             }
@@ -46,7 +46,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app") {
+                                openshift.withProject("cicd") {
                                     // delete everything with this template label
                                     openshift.selector("all", [ template : TEMPLATENAME ]).delete()
                                     // delete any secrets with this template label
@@ -62,7 +62,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app") {
+                                openshift.withProject("cicd") {
                                     // create a new application from the TEMPLATEPATH
                                     openshift.newApp(TEMPLATEPATH)
                                 }
@@ -74,7 +74,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app") {
+                                openshift.withProject("cicd") {
                                     def builds = openshift.selector("bc", TEMPLATENAME).related('builds')
                                     builds.untilEach(1) {
                                         return (it.object().status.phase == "Complete")
@@ -88,7 +88,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app") {
+                                openshift.withProject("cicd") {
                                     echo "All tests passed"
                                 }
                             }
@@ -99,7 +99,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app") {
+                                openshift.withProject("cicd") {
                                     def rm = openshift.selector("dc", TEMPLATENAME).rollout()
                                     openshift.selector("dc", TEMPLATENAME).related('pods').untilEach(1) {
                                         return (it.object().status.phase == "Running")
@@ -113,7 +113,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app") {                            
+                                openshift.withProject("cicd") {                            
                                     userInput = input(
                                         id: 'Proceed1', message: 'Is this ready to send to QA?', parameters: [
                                         [$class: 'BooleanParameterDefinition', defaultValue: true, description: '', name: 'Please confirm you want to send to staging']
@@ -137,7 +137,7 @@ spec:
                     when {
                         expression {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app-staging") {
+                                openshift.withProject("cicd") {
                                     return !openshift.selector('dc', "${TEMPLATENAME}-staging").exists()
                                 }
                             }
@@ -146,7 +146,7 @@ spec:
                     steps {
                         script {
                             openshift.withCluster() {
-                                openshift.withProject("pipeline-app-staging") {
+                                openshift.withProject("cicd") {
                                     echo "Staging doesn't exsit - creating..."
                                     // create the app only when dc doesn't already exist
                                     // otherwise the image change tag will take care of rolling out updates
