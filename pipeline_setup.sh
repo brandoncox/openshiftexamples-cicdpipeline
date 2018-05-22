@@ -1,19 +1,12 @@
 # Create pipeline demo projects in thie cluster
 oc new-project cicd --display-name="CI/CD"
-oc new-project pipeline-app --display-name="Pipeline Example - Build"
-oc new-project pipeline-app-staging --display-name="Pipeline Example - Staging"
+
 
 # Switch to the cicd and create the pipeline build from a template
 oc project cicd
 oc create -f ./pipeline_instant_embeded.yaml
 #oc create -f ./pipeline_instant_external.yaml # note: this will pull from github off the master branch
 
-# Give this project an edit role on other related projects
-oc policy add-role-to-user edit system:serviceaccount:cicd:jenkins -n pipeline-app
-oc policy add-role-to-user edit system:serviceaccount:cicd:jenkins -n pipeline-app-staging
-
-# Give the other related projects the role to pull images from pipeline-app
-oc policy add-role-to-group system:image-puller system:serviceaccounts:pipeline-app-staging -n pipeline-app
 
 # Wait for Jenkins to start
 oc project cicd
