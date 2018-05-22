@@ -25,7 +25,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app") {
+                        openshift.withProject("cicd") {
                             echo "Using project: ${openshift.project()}"
                         }
                     }
@@ -36,7 +36,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app") {
+                        openshift.withProject("cicd") {
                             // delete everything with this template label
                             openshift.selector("all", [ template : TEMPLATENAME ]).delete()
                             // delete any secrets with this template label
@@ -52,7 +52,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app") {
+                        openshift.withProject("cicd") {
                             // create a new application from the TEMPLATEPATH
                             openshift.newApp(TEMPLATEPATH)
                         }
@@ -64,7 +64,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app") {
+                        openshift.withProject("cicd") {
                             def builds = openshift.selector("bc", TEMPLATENAME).related('builds')
                             builds.untilEach(1) {
                                 return (it.object().status.phase == "Complete")
@@ -78,7 +78,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app") {
+                        openshift.withProject("cicd") {
                             echo "All tests passed"
                         }
                     }
@@ -89,7 +89,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app") {
+                        openshift.withProject("cicd") {
                             def rm = openshift.selector("dc", TEMPLATENAME).rollout()
                             openshift.selector("dc", TEMPLATENAME).related('pods').untilEach(1) {
                                 return (it.object().status.phase == "Running")
@@ -103,7 +103,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app") {   
+                        openshift.withProject("cicd") {   
                             mail (
                                 to: 'jdudash@redhat.com',
                                 subject: "Pipeline service (${env.BUILD_NUMBER}) is awaiting promotion",
@@ -118,7 +118,7 @@ pipeline {
                             // image to change and then deploy it to the staging environment
                             openshift.tag("${TEMPLATENAME}:latest", "${TEMPLATENAME}-staging:latest")
                         }
-                        openshift.withProject("pipeline-app-staging") {
+                        openshift.withProject("cicd") {
                             echo "deploying new-app to staging from -latest tag"
                             // the image change tag should take care of rolling out updates
                             // creating stage project happens in the next
@@ -131,7 +131,7 @@ pipeline {
             when {
                 expression {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app-staging") {
+                        openshift.withProject("cicd") {
                             return !openshift.selector('dc', "${TEMPLATENAME}-staging").exists()
                         }
                     }
@@ -140,7 +140,7 @@ pipeline {
             steps {
                 script {
                     openshift.withCluster() {
-                        openshift.withProject("pipeline-app-staging") {
+                        openshift.withProject("cicd") {
                             echo "Staging doesn't exsit - creating..."
                             // create the app only when dc doesn't already exist
                             // otherwise the image change tag will take care of rolling out updates
